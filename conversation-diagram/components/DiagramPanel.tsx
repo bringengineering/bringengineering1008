@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, forwardRef } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -17,7 +17,7 @@ const nodeTypes = {
   custom: CustomNode,
 };
 
-export function DiagramPanel() {
+export const DiagramPanel = forwardRef<HTMLDivElement, {}>(function DiagramPanel(props, ref) {
   const structure = useConversationStore((state) => state.structure);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -33,7 +33,7 @@ export function DiagramPanel() {
   const isEmpty = nodes.length === 0;
 
   return (
-    <div className="h-full bg-gray-50 relative">
+    <div ref={ref} className="h-full bg-gray-50 relative">
       {isEmpty ? (
         <div className="absolute inset-0 flex items-center justify-center text-gray-400">
           <div className="text-center">
@@ -72,4 +72,4 @@ export function DiagramPanel() {
       )}
     </div>
   );
-}
+});

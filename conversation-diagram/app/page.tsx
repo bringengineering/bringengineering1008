@@ -1,13 +1,35 @@
 'use client';
 
+import { useRef } from 'react';
+import { toPng } from 'html-to-image';
 import { ChatPanel } from '@/components/ChatPanel';
 import { DiagramPanel } from '@/components/DiagramPanel';
 import { useConversationStore } from '@/store/conversation-store';
 
 export default function Home() {
+  const diagramRef = useRef<HTMLDivElement>(null);
   const clearConversation = useConversationStore((state) => state.clearConversation);
   const exportAsMarkdown = useConversationStore((state) => state.exportAsMarkdown);
   const structure = useConversationStore((state) => state.structure);
+
+  const handleExportPNG = async () => {
+    if (!diagramRef.current) return;
+
+    try {
+      const dataUrl = await toPng(diagramRef.current, {
+        quality: 1.0,
+        pixelRatio: 2,
+      });
+
+      const link = document.createElement('a');
+      link.download = `conversation-diagram-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error('PNG export failed:', error);
+      alert('PNG 내보내기 실패. 다시 시도해주세요.');
+    }
+  };
 
   const handleExportMarkdown = () => {
     const markdown = exportAsMarkdown();
@@ -43,10 +65,16 @@ export default function Home() {
           {structure && (
             <>
               <button
+                onClick={handleExportPNG}
+                className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              >
+                🖼️ PNG
+              </button>
+              <button
                 onClick={handleExportMarkdown}
                 className="px-4 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
               >
-                📄 Export MD
+                📄 MD
               </button>
               <button
                 onClick={handleClear}
@@ -68,7 +96,7 @@ export default function Home() {
 
         {/* 오른쪽: 도식화 */}
         <div className="w-1/2">
-          <DiagramPanel />
+          <DiagramPanel ref={diagramRef} />
         </div>
       </div>
 
