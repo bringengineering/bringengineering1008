@@ -20,10 +20,10 @@ const levelColors = {
 };
 
 const levelLabels = {
-  1: 'L1: Goal',
-  2: 'L2: Strategy',
-  3: 'L3: Tactic',
-  4: 'L4: Action',
+  1: 'L1: 목표',
+  2: 'L2: 전략',
+  3: 'L3: 실행방법',
+  4: 'L4: 세부액션',
 };
 
 const statusIcons = {
