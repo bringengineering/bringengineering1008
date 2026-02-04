@@ -1,45 +1,37 @@
-# bringengineering1008
+# FD HOLDINGS - 아이디어를 산업 자산으로
 
-터널 직광위험 MVP 백엔드 스켈레톤입니다. FastAPI 기반으로 주요 엔드포인트 골격과 위험도 계산 유틸리티가 포함되어 있습니다.
+AI 기반 특허 가능성 분석 및 IP 유통 플랫폼 프로토타입
 
-## 구성
+## 주요 기능
 
-- `backend/app/main.py` – FastAPI 엔드포인트 정의
-- `backend/app/schemas.py` – 요청/응답 및 계산에 필요한 Pydantic 스키마
-- `backend/app/services.py` – Sg, St, Risk% 계산 로직
-- `backend/app/config.py` – 환경 변수 기반 설정 로딩
-- `backend/requirements.txt` – 백엔드 의존성 목록
-- `.env.example` – API 키 템플릿
+- **아이디어 제출**: NDA 자동 체결, 타임스탬프 기록
+- **AI 자동 분석**: KIPRIS 선행기술 조사, 유사도 분석, 특허 가능성 점수화
+- **명세서 초안 생성**: 등급 A 이상 시 특허 명세서 자동 생성
+- **대시보드**: 제출 현황, 분석 결과 확인
 
-## 실행 방법
+## 기술 스택
 
-1. Python 3.11 이상 환경에서 의존성 설치
+- **Frontend**: Next.js 14, React, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: Supabase (PostgreSQL)
+- **AI**: Claude API (Anthropic)
+- **특허 검색**: KIPRIS API
 
-   ```bash
-   cd backend
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
+## 설치 및 실행
 
-2. 루트 디렉터리에 `.env` 파일 생성 후 발급받은 API 키 입력
+### 1. 의존성 설치
+npm install
 
-   ```bash
-   cp ../.env.example ../.env
-   # 편집기로 실제 키 입력
-   ```
+### 2. 환경변수 설정
+.env.example을 .env.local로 복사하고 API 키 설정
 
-3. 개발 서버 실행
+### 3. 데이터베이스 설정
+Supabase SQL Editor에서 supabase-schema.sql 실행
 
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+### 4. 개발 서버 실행
+npm run dev
 
-4. 브라우저에서 `http://127.0.0.1:8000/docs` 접속하여 OpenAPI 문서를 통해 엔드포인트를 확인할 수 있습니다.
+http://localhost:3000 에서 확인
 
-## 다음 단계 제안
-
-- 실제 공공 API 연동 및 응답 캐싱 로직 구현
-- PostGIS 연동 후 터널/관측소 조회 API 확장
-- PDF 리포트 생성(WeasyPrint 등) 추가
-- 인증/로깅/모니터링 구성
+## 라이선스
+© 2024 FD HOLDINGS. All rights reserved.
