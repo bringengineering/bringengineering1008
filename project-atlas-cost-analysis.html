@@ -1,0 +1,2208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프로젝트 Atlas - 시제품 비용 분석 플랫폼</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ============================================
+   CSS Variables & Reset
+   ============================================ */
+:root {
+  --atlas-blue: #1E3A8A;
+  --atlas-blue-light: #3B82F6;
+  --atlas-teal: #0891B2;
+  --atlas-green: #059669;
+  --atlas-green-light: #10B981;
+  --atlas-orange: #EA580C;
+  --atlas-red: #DC2626;
+  --atlas-purple: #7C3AED;
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F8FAFC;
+  --bg-tertiary: #F1F5F9;
+  --bg-dark: #0F172A;
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  --border: #E2E8F0;
+  --border-light: #F1F5F9;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --chart-1: #3B82F6;
+  --chart-2: #8B5CF6;
+  --chart-3: #EC4899;
+  --chart-4: #F59E0B;
+  --chart-5: #10B981;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0F172A;
+  --bg-secondary: #1E293B;
+  --bg-tertiary: #334155;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --border: #334155;
+  --border-light: #1E293B;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.4);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.5);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--atlas-blue), var(--atlas-teal));
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.logo-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  font-size: 18px;
+}
+
+.btn-icon:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.btn-export {
+  padding: 8px 16px;
+  background: var(--atlas-blue);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-export:hover {
+  background: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================
+   Layout
+   ============================================ */
+.layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 0;
+  min-height: calc(100vh - 64px);
+}
+
+/* ============================================
+   Sidebar
+   ============================================ */
+.sidebar {
+  position: sticky;
+  top: 64px;
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border);
+  padding: 24px 0;
+}
+
+.sidebar-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 0 20px;
+  margin-bottom: 12px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: var(--transition);
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: rgba(59, 130, 246, 0.05);
+  color: var(--atlas-blue-light);
+  border-left-color: var(--atlas-blue-light);
+  font-weight: 600;
+}
+
+.nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.nav-cost {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ============================================
+   Main Content
+   ============================================ */
+.main-content {
+  padding: 32px;
+  overflow-y: auto;
+}
+
+/* ============================================
+   Hero Cards
+   ============================================ */
+.hero-section { margin-bottom: 40px; }
+
+.hero-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.hero-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  transition: var(--transition);
+  animation: fadeInUp 0.6s ease-out both;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.hero-card:nth-child(1)::before { background: var(--atlas-blue-light); }
+.hero-card:nth-child(2)::before { background: var(--atlas-purple); }
+.hero-card:nth-child(3)::before { background: var(--atlas-green); }
+.hero-card:nth-child(4)::before { background: var(--atlas-orange); }
+
+.hero-card:nth-child(1) { animation-delay: 0.0s; }
+.hero-card:nth-child(2) { animation-delay: 0.1s; }
+.hero-card:nth-child(3) { animation-delay: 0.2s; }
+.hero-card:nth-child(4) { animation-delay: 0.3s; }
+
+.hero-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.hero-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+
+.hero-card:nth-child(1) .hero-icon { background: rgba(59,130,246,0.1); }
+.hero-card:nth-child(2) .hero-icon { background: rgba(124,58,237,0.1); }
+.hero-card:nth-child(3) .hero-icon { background: rgba(16,185,129,0.1); }
+.hero-card:nth-child(4) .hero-icon { background: rgba(234,88,12,0.1); }
+
+.hero-value {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.hero-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.hero-bar {
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.hero-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1.2s ease-out;
+  width: 0;
+}
+
+.hero-card:nth-child(1) .hero-bar-fill { background: var(--atlas-blue-light); }
+.hero-card:nth-child(2) .hero-bar-fill { background: var(--atlas-purple); }
+.hero-card:nth-child(3) .hero-bar-fill { background: var(--atlas-green); }
+.hero-card:nth-child(4) .hero-bar-fill { background: var(--atlas-orange); }
+
+.hero-change {
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hero-change.positive { color: var(--atlas-green); }
+.hero-change.negative { color: var(--atlas-red); }
+
+/* ============================================
+   Charts Section
+   ============================================ */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.chart-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.chart-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.chart-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.chart-container {
+  position: relative;
+  height: 280px;
+}
+
+/* ============================================
+   Accordion Sections
+   ============================================ */
+.section-group { margin-bottom: 12px; }
+
+.accordion {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.accordion:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.accordion-header {
+  display: flex;
+  align-items: center;
+  padding: 20px 24px;
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+  gap: 16px;
+}
+
+.accordion-header:hover {
+  background: var(--bg-secondary);
+}
+
+.accordion-arrow {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.accordion.open .accordion-arrow {
+  transform: rotate(90deg);
+}
+
+.accordion-badge {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.accordion-title-group { flex: 1; }
+
+.accordion-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.accordion-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.accordion-cost {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--atlas-blue-light);
+}
+
+.accordion-pct {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.accordion.open .accordion-body {
+  max-height: 5000px;
+}
+
+.accordion-content {
+  padding: 0 24px 24px 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* ============================================
+   Sub-sections inside accordion
+   ============================================ */
+.sub-section {
+  margin-top: 20px;
+}
+
+.sub-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sub-title-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--atlas-blue-light);
+}
+
+.cost-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.cost-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.cost-table thead th:last-child {
+  text-align: right;
+}
+
+.cost-table tbody tr {
+  transition: var(--transition);
+}
+
+.cost-table tbody tr:hover {
+  background: var(--bg-secondary);
+  transform: translateX(2px);
+}
+
+.cost-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: top;
+}
+
+.cost-table tbody td:last-child {
+  text-align: right;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cost-table .subtotal-row td {
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.04);
+  border-top: 2px solid var(--border);
+}
+
+.cost-table .detail {
+  color: var(--text-secondary);
+  font-size: 12px;
+  display: block;
+  margin-top: 2px;
+}
+
+.mini-bar {
+  display: inline-block;
+  height: 4px;
+  border-radius: 2px;
+  margin-left: 8px;
+  vertical-align: middle;
+  transition: width 0.8s ease-out;
+}
+
+/* ============================================
+   Savings Callout
+   ============================================ */
+.savings-callout {
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: rgba(5, 150, 105, 0.06);
+  border: 1px solid rgba(5, 150, 105, 0.15);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--atlas-green);
+  font-weight: 600;
+}
+
+.savings-icon {
+  font-size: 18px;
+}
+
+/* ============================================
+   Comparison Section
+   ============================================ */
+.comparison-section {
+  margin-bottom: 40px;
+}
+
+.section-header {
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.section-header p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.comparison-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  position: relative;
+}
+
+.comparison-card.highlight {
+  border-color: var(--atlas-green);
+  box-shadow: 0 0 0 1px var(--atlas-green);
+}
+
+.comparison-card.highlight::after {
+  content: 'RECOMMENDED';
+  position: absolute;
+  top: -1px;
+  right: 20px;
+  background: var(--atlas-green);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 4px 12px;
+  border-radius: 0 0 6px 6px;
+}
+
+.comparison-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.comparison-value {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.comparison-range {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  margin-bottom: 20px;
+}
+
+.comparison-items {
+  list-style: none;
+}
+
+.comparison-items li {
+  padding: 8px 0;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.comparison-items li:last-child { border-bottom: none; }
+
+.comparison-items .item-label { color: var(--text-secondary); }
+.comparison-items .item-value { font-weight: 600; }
+
+/* ============================================
+   Production Scale Slider
+   ============================================ */
+.scale-section {
+  margin-bottom: 40px;
+}
+
+.scale-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+}
+
+.slider-container {
+  margin: 24px 0;
+}
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.slider-value {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  outline: none;
+  transition: var(--transition);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--atlas-blue-light);
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-lg);
+}
+
+.scale-result {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.scale-stat {
+  text-align: center;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.scale-stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.scale-stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.scale-chart-container {
+  margin-top: 24px;
+  height: 250px;
+  position: relative;
+}
+
+/* ============================================
+   Summary Table
+   ============================================ */
+.summary-section {
+  margin-bottom: 40px;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.summary-table thead th {
+  background: var(--atlas-blue);
+  color: white;
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-table thead th:nth-child(n+2) { text-align: right; }
+
+.summary-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.summary-table tbody td:nth-child(n+2) {
+  text-align: right;
+  font-weight: 600;
+}
+
+.summary-table tbody tr:hover {
+  background: var(--bg-secondary);
+}
+
+.summary-table tfoot td {
+  padding: 16px;
+  font-weight: 800;
+  font-size: 15px;
+  background: var(--bg-tertiary);
+  border-top: 2px solid var(--atlas-blue);
+}
+
+.summary-table tfoot td:nth-child(n+2) { text-align: right; }
+
+.pct-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pct-badge.blue { background: rgba(59,130,246,0.1); color: var(--atlas-blue-light); }
+.pct-badge.purple { background: rgba(124,58,237,0.1); color: var(--atlas-purple); }
+.pct-badge.green { background: rgba(5,150,105,0.1); color: var(--atlas-green); }
+.pct-badge.orange { background: rgba(234,88,12,0.1); color: var(--atlas-orange); }
+
+/* ============================================
+   Partners Section
+   ============================================ */
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.partner-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.partner-card:hover {
+  border-color: var(--atlas-blue-light);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.partner-name {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.partner-role {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.partner-savings {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--atlas-green);
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.footer {
+  margin-top: 40px;
+  padding: 24px 0;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes countUp {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 1200px) {
+  .hero-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 1023px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .sidebar { display: none; }
+  .main-content { padding: 24px 16px; }
+  .comparison-grid { grid-template-columns: 1fr; }
+  .charts-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .hero-cards { grid-template-columns: 1fr; }
+  .hero-value { font-size: 26px; }
+  .header-inner { padding: 0 16px; }
+  .logo-subtitle { display: none; }
+  .scale-result { grid-template-columns: 1fr; }
+  .comparison-value { font-size: 28px; }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+  .header { position: static; }
+  .sidebar { display: none; }
+  .layout { grid-template-columns: 1fr; }
+  .btn-icon, .btn-export, .header-actions { display: none; }
+  .accordion-body { max-height: none !important; }
+  .hero-card { break-inside: avoid; }
+  body { font-size: 12px; }
+  .main-content { padding: 0; }
+}
+
+/* ============================================
+   Scrollbar
+   ============================================ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ============================================
+   Mobile Sidebar Toggle
+   ============================================ */
+.sidebar-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+@media (max-width: 1023px) {
+  .sidebar-toggle { display: flex; }
+  .sidebar.mobile-open {
+    display: block;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    width: 280px;
+    z-index: 99;
+    box-shadow: var(--shadow-xl);
+  }
+}
+
+/* ============================================
+   Waste Vinyl Section Specific
+   ============================================ */
+.vinyl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.vinyl-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  transition: var(--transition);
+}
+
+.vinyl-item:hover {
+  border-color: var(--atlas-teal);
+  box-shadow: var(--shadow-sm);
+}
+
+.vinyl-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.vinyl-item-name {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.vinyl-item-pct {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(8, 145, 178, 0.1);
+  color: var(--atlas-teal);
+}
+
+.vinyl-item-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.vinyl-bar {
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.vinyl-bar-fill {
+  height: 100%;
+  background: var(--atlas-teal);
+  border-radius: 2px;
+  transition: width 1s ease-out;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================
+     HEADER
+     ============================================ -->
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">A</div>
+      <div>
+        <div class="logo-text">Project Atlas</div>
+        <div class="logo-subtitle">시제품 비용 분석 플랫폼</div>
+      </div>
+    </a>
+    <div class="header-actions">
+      <button class="sidebar-toggle" onclick="toggleMobileSidebar()" aria-label="메뉴 열기">&#9776;</button>
+      <button class="btn-icon" onclick="toggleTheme()" title="다크 모드 전환" aria-label="다크 모드 전환">&#9790;</button>
+      <button class="btn-export" onclick="window.print()" title="PDF로 인쇄">
+        <span>&#128438;</span> PDF 출력
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================
+     LAYOUT
+     ============================================ -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">목차</div>
+    <a class="nav-item active" href="#hero" onclick="setActive(this)">
+      <span class="nav-dot" style="background:var(--atlas-blue-light)"></span>
+      대시보드 요약
+    </a>
+    <a class="nav-item" href="#part1" onclick="setActive(this)">
+      <span class="nav-dot" style="background:var(--atlas-teal)"></span>
+      Part 1: 폐비닐 활용 구간
+    </a>
+    <a class="nav-item" href="#part2-2" onclick="setActive(this)">
+      <span class="nav-dot" style="background:var(--chart-1)"></span>
+      Part 2-&#9313;: 염수 분사 노즐
+      <span class="nav-cost">1,525만</span>
+    </a>
+    <a class="nav-item" href="#part2-3" onclick="setActive(this)">
+      <span class="nav-dot" style="background:var(--chart-2)"></span>
+      Part 2-&#9314;: 염수 순환 장치
+      <span class="nav-cost">2,475만</span>
+    </a>
+    <a class="nav-item" href="#part2-4" onclick="setActive(this)">
+      <span class="nav-dot" style="background:var(--chart-3)"></span>
+      Part 2-&#9315;: IoT&#183;Edge AI
+      <span class="nav-cost">6,500만</span>
+    </a>
+    <a class="nav-item" href="#part2-5" onclick="setActive(this)">
+      <span class="nav-dot" style="background:var(--chart-4)"></span>
+      Part 2-&#9316;: 기타 비용
+      <span class="nav-cost">3,000만</span>
+    </a>
+    <a class="nav-item" href="#comparison" onclick="setActive(this)">
+      <span class="nav-dot" style="background:var(--atlas-green)"></span>
+      협력사 할인 효과
+    </a>
+    <a class="nav-item" href="#scale" onclick="setActive(this)">
+      <span class="nav-dot" style="background:var(--atlas-orange)"></span>
+      양산 시나리오
+    </a>
+    <a class="nav-item" href="#summary" onclick="setActive(this)">
+      <span class="nav-dot" style="background:var(--atlas-blue)"></span>
+      최종 총계
+    </a>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- ============================================
+         HERO DASHBOARD
+         ============================================ -->
+    <section class="hero-section" id="hero">
+      <div class="hero-cards">
+        <div class="hero-card">
+          <div class="hero-icon">&#128176;</div>
+          <div class="hero-value" data-count="13500">0</div>
+          <div class="hero-label">평균 시제품 비용 (만 원)</div>
+          <div class="hero-bar"><div class="hero-bar-fill" data-width="75%"></div></div>
+          <div class="hero-change positive">&#9660; 15% vs 독자개발</div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-icon">&#128187;</div>
+          <div class="hero-value">55%</div>
+          <div class="hero-label">최대 비중: IoT&#183;Edge AI</div>
+          <div class="hero-bar"><div class="hero-bar-fill" data-width="55%"></div></div>
+          <div class="hero-change negative">약 6,500만 원</div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-icon">&#9851;</div>
+          <div class="hero-value">65~70%</div>
+          <div class="hero-label">폐비닐 활용률 (부피 기준)</div>
+          <div class="hero-bar"><div class="hero-bar-fill" data-width="67%"></div></div>
+          <div class="hero-change positive">총 비용 25~30% 절감</div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-icon">&#128200;</div>
+          <div class="hero-value">81%</div>
+          <div class="hero-label">양산 절감율 (1,000개)</div>
+          <div class="hero-bar"><div class="hero-bar-fill" data-width="81%"></div></div>
+          <div class="hero-change positive">구간당 2,500만 원</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         CHARTS
+         ============================================ -->
+    <section class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">비용 구성 비율</div>
+        <div class="chart-subtitle">구성 요소별 총 비용 대비 비중</div>
+        <div class="chart-container">
+          <canvas id="doughnutChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">독자개발 vs 협력사 활용</div>
+        <div class="chart-subtitle">구성 요소별 비용 비교 (만 원)</div>
+        <div class="chart-container">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         PART 1: 폐비닐 활용 구간
+         ============================================ -->
+    <section id="part1" class="section-group">
+      <div class="accordion open">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-arrow">&#9654;</div>
+          <div class="accordion-badge" style="background: var(--atlas-teal)"></div>
+          <div class="accordion-title-group">
+            <div class="accordion-title">Part 1: 폐비닐 활용 가능 구간</div>
+            <div class="accordion-meta">
+              <span class="accordion-cost">10개 항목 | 부피 65~70%</span>
+              <span class="accordion-pct">비용 25~30% 절감</span>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <div class="vinyl-grid">
+              <div class="vinyl-item">
+                <div class="vinyl-item-header">
+                  <span class="vinyl-item-name">1. 경계석 본체</span>
+                  <span class="vinyl-item-pct">70%</span>
+                </div>
+                <div class="vinyl-item-desc">PE 폐비닐 + 강모래 + 시멘트 혼합. 전체 부피의 최대 70%</div>
+                <div class="vinyl-bar"><div class="vinyl-bar-fill" style="width:70%"></div></div>
+              </div>
+              <div class="vinyl-item">
+                <div class="vinyl-item-header">
+                  <span class="vinyl-item-name">2. 내부 격벽</span>
+                  <span class="vinyl-item-pct">80%</span>
+                </div>
+                <div class="vinyl-item-desc">재활용 PE 폐비닐 사출 성형. 순환관 고정용 칸막이 구조</div>
+                <div class="vinyl-bar"><div class="vinyl-bar-fill" style="width:80%"></div></div>
+              </div>
+              <div class="vinyl-item">
+                <div class="vinyl-item-header">
+                  <span class="vinyl-item-name">3. 노즐 마운트</span>
+                  <span class="vinyl-item-pct">60%</span>
+                </div>
+                <div class="vinyl-item-desc">폐비닐 압출 성형 브래킷. 노즐 고정 및 각도 조절</div>
+                <div class="vinyl-bar"><div class="vinyl-bar-fill" style="width:60%"></div></div>
+              </div>
+              <div class="vinyl-item">
+                <div class="vinyl-item-header">
+                  <span class="vinyl-item-name">4. 배관 클램프</span>
+                  <span class="vinyl-item-pct">90%</span>
+                </div>
+                <div class="vinyl-item-desc">폐비닐 사출 클램프. 배관 고정 및 진동 방지</div>
+                <div class="vinyl-bar"><div class="vinyl-bar-fill" style="width:90%"></div></div>
+              </div>
+              <div class="vinyl-item">
+                <div class="vinyl-item-header">
+                  <span class="vinyl-item-name">5. 센서 하우징</span>
+                  <span class="vinyl-item-pct">85%</span>
+                </div>
+                <div class="vinyl-item-desc">폐비닐 성형 방수 케이스. IoT 센서 보호</div>
+                <div class="vinyl-bar"><div class="vinyl-bar-fill" style="width:85%"></div></div>
+              </div>
+              <div class="vinyl-item">
+                <div class="vinyl-item-header">
+                  <span class="vinyl-item-name">6. 케이블 덮개</span>
+                  <span class="vinyl-item-pct">95%</span>
+                </div>
+                <div class="vinyl-item-desc">폐비닐 압출 케이블 트레이. 통신/전원 케이블 보호</div>
+                <div class="vinyl-bar"><div class="vinyl-bar-fill" style="width:95%"></div></div>
+              </div>
+              <div class="vinyl-item">
+                <div class="vinyl-item-header">
+                  <span class="vinyl-item-name">7. 배터리 케이스</span>
+                  <span class="vinyl-item-pct">75%</span>
+                </div>
+                <div class="vinyl-item-desc">Edge AI 전원 배터리 보호 케이스. 방수 IP67</div>
+                <div class="vinyl-bar"><div class="vinyl-bar-fill" style="width:75%"></div></div>
+              </div>
+              <div class="vinyl-item">
+                <div class="vinyl-item-header">
+                  <span class="vinyl-item-name">8. 맨홀 커버</span>
+                  <span class="vinyl-item-pct">65%</span>
+                </div>
+                <div class="vinyl-item-desc">폐비닐 + 강화 섬유 복합 커버. 점검구 보호</div>
+                <div class="vinyl-bar"><div class="vinyl-bar-fill" style="width:65%"></div></div>
+              </div>
+              <div class="vinyl-item">
+                <div class="vinyl-item-header">
+                  <span class="vinyl-item-name">9. 연결 피팅</span>
+                  <span class="vinyl-item-pct">50%</span>
+                </div>
+                <div class="vinyl-item-desc">폐비닐 사출 연결부. 경계석 간 조인트</div>
+                <div class="vinyl-bar"><div class="vinyl-bar-fill" style="width:50%"></div></div>
+              </div>
+              <div class="vinyl-item">
+                <div class="vinyl-item-header">
+                  <span class="vinyl-item-name">10. 표면 마감재</span>
+                  <span class="vinyl-item-pct">40%</span>
+                </div>
+                <div class="vinyl-item-desc">폐비닐 코팅 표면 처리. 내후성 및 미관 향상</div>
+                <div class="vinyl-bar"><div class="vinyl-bar-fill" style="width:40%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         PART 2-2: 염수 분사 노즐 구조
+         ============================================ -->
+    <section id="part2-2" class="section-group">
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-arrow">&#9654;</div>
+          <div class="accordion-badge" style="background: var(--chart-1)"></div>
+          <div class="accordion-title-group">
+            <div class="accordion-title">Part 2-&#9313;: 염수 분사 노즐 구조</div>
+            <div class="accordion-meta">
+              <span class="accordion-cost">1,000만~1,800만 원</span>
+              <span class="accordion-pct">비중 13%</span>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <!-- 2-1 노즐 설계 및 제작 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>2-1. 노즐 설계 및 제작: 500만~1,000만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr><td>CFD 시뮬레이션</td><td>ANSYS Fluent, 엔지니어 1명 x 4일<span class="detail">분사 패턴, 유속, 압력 해석</span></td><td>250~300</td></tr>
+                  <tr><td>3D CAD 모델링</td><td>SolidWorks, 1~2일<span class="detail">노즐 형상, 폐비닐 마운트 포함</span></td><td>100~150</td></tr>
+                  <tr><td>프로토타입 제작</td><td>3D 프린팅 or CNC<span class="detail">SUS316L 소재, 3~5개 시작품</span></td><td>200~350</td></tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>550~800</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 2-2 분사 최적화 테스트 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>2-2. 분사 최적화 테스트: 300만~500만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr><td>유량 측정 장비</td><td>유량계 임대 2주<span class="detail">정밀 유량 측정 및 분포 분석</span></td><td>80~120</td></tr>
+                  <tr><td>시험 인건비</td><td>엔지니어 2명 x 5일<span class="detail">현장 분사 패턴 최적화</span></td><td>150~250</td></tr>
+                  <tr><td>소모품/재료비</td><td>염수, 고압 호스 등<span class="detail">테스트용 소모 자재</span></td><td>50~80</td></tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>280~450</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 2-3 부식 방지 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>2-3. 부식 방지 코팅: 200만~300만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr><td>내염성 코팅</td><td>에폭시 + 세라믹 복합 코팅<span class="detail">염수 환경 10년 내구성</span></td><td>100~150</td></tr>
+                  <tr><td>코팅 시험</td><td>KOLAS 인증 기관<span class="detail">KS F 2596 기준 염수 침지</span></td><td>80~120</td></tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>180~270</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="savings-callout">
+              <span class="savings-icon">&#10003;</span>
+              협력사 활용 절감: 뉴돈테크, 마스코리아 노즐 기술 활용 시 약 300만~500만 원 절감 가능
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         PART 2-3: 염수 순환 장치
+         ============================================ -->
+    <section id="part2-3" class="section-group">
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-arrow">&#9654;</div>
+          <div class="accordion-badge" style="background: var(--chart-2)"></div>
+          <div class="accordion-title-group">
+            <div class="accordion-title">Part 2-&#9314;: 염수 순환 장치</div>
+            <div class="accordion-meta">
+              <span class="accordion-cost">2,100만~3,600만 원</span>
+              <span class="accordion-pct">비중 21%</span>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <!-- 3-1 순환 배관 설계 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>3-1. 순환 배관 설계: 800만~1,200만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr><td>배관 설계 (CAD)</td><td>3D 배관 레이아웃, 유동 해석<span class="detail">SUS316L 배관, DN15~DN25</span></td><td>200~300</td></tr>
+                  <tr><td>배관 자재</td><td>SUS316L 파이프 + 피팅<span class="detail">100m 기준, 내염성 소재</span></td><td>300~500</td></tr>
+                  <tr><td>단열재 (폐비닐)</td><td>폐비닐 발포 단열재<span class="detail">동결 방지, 부피 50% 폐비닐</span></td><td>50~80</td></tr>
+                  <tr><td>시공 인건비</td><td>배관공 2명 x 5일<span class="detail">배관 설치 및 테스트</span></td><td>200~300</td></tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>750~1,180</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 3-2 펌프 시스템 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>3-2. 펌프 시스템: 800만~1,400만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr><td>순환 펌프</td><td>산업용 내식 펌프 2대<span class="detail">유량 50L/min, 압력 3~5bar</span></td><td>300~500</td></tr>
+                  <tr><td>가압 펌프</td><td>고압 펌프 1대<span class="detail">노즐 분사용, 10~15bar</span></td><td>200~400</td></tr>
+                  <tr><td>인버터 제어반</td><td>VFD + PLC 컨트롤러<span class="detail">유량 자동 제어, 에너지 절감</span></td><td>150~300</td></tr>
+                  <tr><td>펌프 보호 케이스 (폐비닐)</td><td>폐비닐 성형 방수 하우징<span class="detail">IP67 등급, 방진/방수</span></td><td>30~50</td></tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>680~1,250</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 3-3 염수 저장 탱크 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>3-3. 염수 저장 탱크: 500만~1,000만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr><td>탱크 본체</td><td>SUS316L, 500L 용량<span class="detail">내염성, 이중벽 구조</span></td><td>200~400</td></tr>
+                  <tr><td>히터 시스템</td><td>전기 히터 + 온도 센서<span class="detail">동결 방지, 자동 온도 제어</span></td><td>100~200</td></tr>
+                  <tr><td>레벨 센서</td><td>초음파 레벨 센서<span class="detail">염수 잔량 모니터링</span></td><td>30~50</td></tr>
+                  <tr><td>밸브 시스템</td><td>전동 볼밸브 3~5개<span class="detail">자동 개폐, MODBUS 통신</span></td><td>100~200</td></tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>430~850</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="savings-callout">
+              <span class="savings-icon">&#10003;</span>
+              협력사 활용 절감: 세진기술개발, SRD코리아 펌프/배관 기술 활용 시 약 500만~750만 원 절감 가능
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         PART 2-4: IoT·Edge AI 시스템
+         ============================================ -->
+    <section id="part2-4" class="section-group">
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-arrow">&#9654;</div>
+          <div class="accordion-badge" style="background: var(--chart-3)"></div>
+          <div class="accordion-title-group">
+            <div class="accordion-title">Part 2-&#9315;: IoT&#183;Edge AI 시스템</div>
+            <div class="accordion-meta">
+              <span class="accordion-cost">5,500만~9,000만 원</span>
+              <span class="accordion-pct">비중 55%</span>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <!-- 4-1 IoT 센서 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>4-1. IoT 센서: 1,000만~2,000만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>A. 노면 온도 센서</td>
+                    <td>적외선 비접촉식 5~10대 x 8만원<span class="detail">폐비닐 마운트 20만, 설치 인건비 50만</span></td>
+                    <td>110~150</td>
+                  </tr>
+                  <tr>
+                    <td>B. 습도 센서</td>
+                    <td>정전용량식 (IP67) 5~10대 x 6만원<span class="detail">폐비닐 방수 케이스 10만</span></td>
+                    <td>40~70</td>
+                  </tr>
+                  <tr>
+                    <td>C. 노면 카메라/라이다</td>
+                    <td>산업용 IP 카메라 2~3대 or 라이다 2대<span class="detail">폐비닐 보호 하우징 15만</span></td>
+                    <td>315~465</td>
+                  </tr>
+                  <tr>
+                    <td>D. 통신 모듈</td>
+                    <td>LTE 모듈 5개 x 15만 + LoRa GW 1대<span class="detail">데이터 요금 연 15만</span></td>
+                    <td>140</td>
+                  </tr>
+                  <tr>
+                    <td>E. 케이블 보호 (폐비닐)</td>
+                    <td>폐비닐 덮개 100m + 피팅 20개<span class="detail">인건비 1일 50만</span></td>
+                    <td>140</td>
+                  </tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>745~965</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 4-2 Edge AI 하드웨어 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>4-2. Edge AI 하드웨어: 1,500만~2,500만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>A. Edge AI 컴퓨팅</td>
+                    <td>NVIDIA Jetson Orin Nano 2대 or RPi5+Coral TPU 3세트<span class="detail">산업용 등급 -40&#176;C~85&#176;C</span></td>
+                    <td>160~300</td>
+                  </tr>
+                  <tr>
+                    <td>B. 방수 케이스 (폐비닐)</td>
+                    <td>폐비닐 금형 150만 + 제작 30만<span class="detail">IP67 인증 테스트 50만</span></td>
+                    <td>230</td>
+                  </tr>
+                  <tr>
+                    <td>C. 전원 시스템</td>
+                    <td>태양광 100W x 2 + 리튬 배터리<span class="detail">MPPT 컨트롤러, 폐비닐 케이스</span></td>
+                    <td>280~430</td>
+                  </tr>
+                  <tr>
+                    <td>D. 통신 모듈 (고급형)</td>
+                    <td>4G/5G 모듈 2개 + GPS + 안테나<span class="detail">고속 데이터 전송용</span></td>
+                    <td>140</td>
+                  </tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>810~1,100</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 4-3 결빙 판단 알고리즘 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>4-3. 결빙 판단 알고리즘 개발: 2,000만~3,000만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>A. 데이터 수집/라벨링</td>
+                    <td>기상청 데이터 + 현장 2개월<span class="detail">이미지 1만장 라벨링 외주</span></td>
+                    <td>600~850</td>
+                  </tr>
+                  <tr>
+                    <td>B. AI 모델 개발</td>
+                    <td>AI 엔지니어 2명 x 2개월<span class="detail">클라우드 GPU 학습비 포함</span></td>
+                    <td>900~1,400</td>
+                  </tr>
+                  <tr>
+                    <td>C. Edge 최적화</td>
+                    <td>TensorFlow Lite 변환 + 엔지니어 1명 x 1개월<span class="detail">현장 검증 1개월</span></td>
+                    <td>500~700</td>
+                  </tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>2,000~2,950</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 4-4 자동 제어 시스템 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>4-4. 자동 제어 시스템 통합: 1,000만~1,500만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>A. 제어 로직 개발</td>
+                    <td>PID 제어, 시퀀스 로직<span class="detail">제어 엔지니어 1명 x 1개월</span></td>
+                    <td>400~600</td>
+                  </tr>
+                  <tr>
+                    <td>B. 펌프/밸브 인터페이스</td>
+                    <td>MODBUS/CAN 통신 + 드라이버<span class="detail">뉴돈테크/마스코리아 API 연계</span></td>
+                    <td>300~500</td>
+                  </tr>
+                  <tr>
+                    <td>C. 모니터링 대시보드</td>
+                    <td>웹 대시보드 + 모바일 앱<span class="detail">클라우드 서버 1년 포함</span></td>
+                    <td>300~450</td>
+                  </tr>
+                  <tr>
+                    <td>D. 통합 테스트</td>
+                    <td>시스템 통합 2주 + 현장 1개월</td>
+                    <td>200</td>
+                  </tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>1,200~1,750</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="savings-callout">
+              <span class="savings-icon">&#10003;</span>
+              협력사 활용 절감: 율성, 한진엔지니어링, 피치케이블 IoT/센서 기술 활용 시 약 800만~1,200만 원 절감 가능
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         PART 2-5: 기타 비용
+         ============================================ -->
+    <section id="part2-5" class="section-group">
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-arrow">&#9654;</div>
+          <div class="accordion-badge" style="background: var(--chart-4)"></div>
+          <div class="accordion-title-group">
+            <div class="accordion-title">Part 2-&#9316;: 기타 비용</div>
+            <div class="accordion-meta">
+              <span class="accordion-cost">2,000만~4,000만 원</span>
+              <span class="accordion-pct">비중 11%</span>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <!-- 5-1 시스템 통합 및 테스트 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>5-1. 시스템 통합 및 테스트: 1,000만~2,000만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>A. 시스템 통합</td>
+                    <td>통합 엔지니어 2명 x 2주<span class="detail">인터페이스 개발 포함</span></td>
+                    <td>600~1,000</td>
+                  </tr>
+                  <tr>
+                    <td>B. 저온 챔버 테스트</td>
+                    <td>KOLAS 인증기관, -30&#176;C~40&#176;C x 100회<span class="detail">내구성 테스트 5,000시간 가속</span></td>
+                    <td>300~600</td>
+                  </tr>
+                  <tr>
+                    <td>C. 현장 통합 테스트</td>
+                    <td>현장 설치 3일 + 디버깅 1주</td>
+                    <td>250~350</td>
+                  </tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>1,150~1,950</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 5-2 현장 설치 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>5-2. 현장 설치: 500만~1,000만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>A. 시공 인력</td>
+                    <td>기술자 3명 x 3일 + 보조 2명 x 3일<span class="detail">일당 50만 / 20만</span></td>
+                    <td>570</td>
+                  </tr>
+                  <tr>
+                    <td>B. 중장비</td>
+                    <td>굴착기 1일 + 크레인 1일<span class="detail">임대 비용</span></td>
+                    <td>180</td>
+                  </tr>
+                  <tr>
+                    <td>C. 안전 관리</td>
+                    <td>안전 관리자 3일 + 장비</td>
+                    <td>200</td>
+                  </tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>950</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 5-3 KOLAS 시험 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>5-3. KOLAS 시험 성적서 3종: 500만~1,000만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>A. 압축 강도 시험</td>
+                    <td>KS F 4004, 경계석 압축<span class="detail">시험 샘플 10개 포함</span></td>
+                    <td>200~350</td>
+                  </tr>
+                  <tr>
+                    <td>B. 내염성 시험</td>
+                    <td>KS F 2596, 염수 침지 시험</td>
+                    <td>200~400</td>
+                  </tr>
+                  <tr>
+                    <td>C. 내구성 시험</td>
+                    <td>KS F 4419, 동결 융해</td>
+                    <td>100~250</td>
+                  </tr>
+                  <tr class="subtotal-row"><td colspan="2">소계</td><td>500~1,000</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 5-4 예비비 -->
+            <div class="sub-section">
+              <div class="sub-title"><span class="sub-title-dot"></span>5-4. 예비비 (10%): 300만~600만 원</div>
+              <table class="cost-table">
+                <thead><tr><th>항목</th><th>상세</th><th>비용 (만 원)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>예비비</td>
+                    <td>전체 비용의 10%<span class="detail">예상치 못한 추가 비용 대비</span></td>
+                    <td>300~600</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         COMPARISON SECTION
+         ============================================ -->
+    <section id="comparison" class="comparison-section">
+      <div class="section-header">
+        <h2>협력사 할인 효과 비교</h2>
+        <p>7개 협력사 활용 시 구체적 절감 효과 분석</p>
+      </div>
+
+      <div class="comparison-grid">
+        <div class="comparison-card">
+          <div class="comparison-label">독자 개발</div>
+          <div class="comparison-value" style="color: var(--atlas-orange)">1억 6,965만</div>
+          <div class="comparison-range">범위: 1억 4,365만~1억 9,565만 원</div>
+          <ul class="comparison-items">
+            <li><span class="item-label">염수 분사 노즐</span><span class="item-value">2,000만</span></li>
+            <li><span class="item-label">염수 순환 장치</span><span class="item-value">3,205만</span></li>
+            <li><span class="item-label">IoT&#183;Edge AI</span><span class="item-value">8,035만</span></li>
+            <li><span class="item-label">기타 비용</span><span class="item-value">3,725만</span></li>
+          </ul>
+        </div>
+        <div class="comparison-card highlight">
+          <div class="comparison-label">협력사 활용</div>
+          <div class="comparison-value" style="color: var(--atlas-green)">1억 3,500만</div>
+          <div class="comparison-range">범위: 1억 800만~1억 6,200만 원</div>
+          <ul class="comparison-items">
+            <li><span class="item-label">염수 분사 노즐</span><span class="item-value">1,525만</span></li>
+            <li><span class="item-label">염수 순환 장치</span><span class="item-value">2,475만</span></li>
+            <li><span class="item-label">IoT&#183;Edge AI</span><span class="item-value">6,500만</span></li>
+            <li><span class="item-label">기타 비용</span><span class="item-value">3,000만</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Partners Grid -->
+      <div style="margin-top: 28px">
+        <div class="section-header">
+          <h2>7개 협력사 현황</h2>
+          <p>염수 분사 4개사 + 스마트 열선 3개사</p>
+        </div>
+        <div class="partners-grid">
+          <div class="partner-card">
+            <div class="partner-name">뉴돈테크</div>
+            <div class="partner-role">염수 분사 / 펌프</div>
+            <div class="partner-savings">절감 ~150만</div>
+          </div>
+          <div class="partner-card">
+            <div class="partner-name">마스코리아</div>
+            <div class="partner-role">염수 분사 / 노즐</div>
+            <div class="partner-savings">절감 ~200만</div>
+          </div>
+          <div class="partner-card">
+            <div class="partner-name">세진기술개발</div>
+            <div class="partner-role">염수 순환 / 배관</div>
+            <div class="partner-savings">절감 ~150만</div>
+          </div>
+          <div class="partner-card">
+            <div class="partner-name">SRD코리아</div>
+            <div class="partner-role">염수 순환 / 펌프</div>
+            <div class="partner-savings">절감 ~150만</div>
+          </div>
+          <div class="partner-card">
+            <div class="partner-name">율성</div>
+            <div class="partner-role">IoT / 센서 통합</div>
+            <div class="partner-savings">절감 ~400만</div>
+          </div>
+          <div class="partner-card">
+            <div class="partner-name">한진엔지니어링</div>
+            <div class="partner-role">IoT / 전원 시스템</div>
+            <div class="partner-savings">절감 ~400만</div>
+          </div>
+          <div class="partner-card">
+            <div class="partner-name">피치케이블</div>
+            <div class="partner-role">IoT / 케이블링</div>
+            <div class="partner-savings">절감 ~400만</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         PRODUCTION SCALE SECTION
+         ============================================ -->
+    <section id="scale" class="scale-section">
+      <div class="section-header">
+        <h2>양산 시 비용 절감 시나리오</h2>
+        <p>생산 규모에 따른 구간당 비용 변화</p>
+      </div>
+
+      <div class="scale-card">
+        <div class="slider-container">
+          <div class="slider-label">
+            <span>생산 규모</span>
+            <span class="slider-value" id="scaleValue">1개 (시제품)</span>
+          </div>
+          <input type="range" id="scaleSlider" min="0" max="3" step="1" value="0">
+        </div>
+
+        <div class="scale-result">
+          <div class="scale-stat">
+            <div class="scale-stat-value" id="unitCost" style="color: var(--atlas-blue-light)">13,500만</div>
+            <div class="scale-stat-label">구간당 비용</div>
+          </div>
+          <div class="scale-stat">
+            <div class="scale-stat-value" id="savingsRate" style="color: var(--atlas-green)">0%</div>
+            <div class="scale-stat-label">절감율</div>
+          </div>
+          <div class="scale-stat">
+            <div class="scale-stat-value" id="totalCost" style="color: var(--atlas-purple)">1.35억</div>
+            <div class="scale-stat-label">총 비용</div>
+          </div>
+        </div>
+
+        <div class="scale-chart-container">
+          <canvas id="scaleChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         FINAL SUMMARY TABLE
+         ============================================ -->
+    <section id="summary" class="summary-section">
+      <div class="section-header">
+        <h2>최종 총계</h2>
+        <p>구성 요소별 독자 개발 vs 협력사 활용 비교 정리</p>
+      </div>
+
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>구성 요소</th>
+            <th>독자 개발</th>
+            <th>협력사 활용</th>
+            <th>평균</th>
+            <th>비중</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>&#9313; 염수 분사 노즐</td>
+            <td>1,700만~2,300만</td>
+            <td>1,200만~1,850만</td>
+            <td>1,525만</td>
+            <td><span class="pct-badge blue">13%</span></td>
+          </tr>
+          <tr>
+            <td>&#9314; 염수 순환 장치</td>
+            <td>2,810만~3,600만</td>
+            <td>2,100만~2,850만</td>
+            <td>2,475만</td>
+            <td><span class="pct-badge purple">21%</span></td>
+          </tr>
+          <tr>
+            <td>&#9315; IoT&#183;Edge AI</td>
+            <td>6,955만~9,115만</td>
+            <td>5,500만~7,500만</td>
+            <td>6,500만</td>
+            <td><span class="pct-badge green">55%</span></td>
+          </tr>
+          <tr>
+            <td>&#9316; 기타 비용</td>
+            <td>2,900만~4,550만</td>
+            <td>2,000만~4,000만</td>
+            <td>3,000만</td>
+            <td><span class="pct-badge orange">11%</span></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>총계</td>
+            <td>1억 4,365만~1억 9,565만</td>
+            <td>1억 800만~1억 6,200만</td>
+            <td>약 1억 3,500만</td>
+            <td><span class="pct-badge blue">100%</span></td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      Project Atlas &copy; 2026 | 시제품 비용 분석 플랫폼 | 폐비닐 재활용 제설 경계석 시스템
+    </footer>
+
+  </main>
+</div>
+
+<!-- ============================================
+     JAVASCRIPT
+     ============================================ -->
+<script>
+// ============================================
+// Theme Toggle
+// ============================================
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  html.setAttribute('data-theme', current === 'dark' ? '' : 'dark');
+  // Re-render charts with appropriate colors
+  renderCharts();
+}
+
+// ============================================
+// Mobile Sidebar Toggle
+// ============================================
+function toggleMobileSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+
+// ============================================
+// Sidebar Navigation
+// ============================================
+function setActive(el) {
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    item.classList.remove('active');
+  });
+  el.classList.add('active');
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('mobile-open');
+}
+
+// Scroll spy for sidebar
+var observerOptions = {
+  root: null,
+  rootMargin: '-80px 0px -60% 0px',
+  threshold: 0
+};
+
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      var id = entry.target.id;
+      document.querySelectorAll('.nav-item').forEach(function(item) {
+        item.classList.remove('active');
+        if (item.getAttribute('href') === '#' + id) {
+          item.classList.add('active');
+        }
+      });
+    }
+  });
+}, observerOptions);
+
+document.querySelectorAll('section[id]').forEach(function(section) {
+  observer.observe(section);
+});
+
+// ============================================
+// Accordion
+// ============================================
+function toggleAccordion(header) {
+  var accordion = header.parentElement;
+  accordion.classList.toggle('open');
+}
+
+// ============================================
+// Hero Card Animations
+// ============================================
+function animateHeroBars() {
+  document.querySelectorAll('.hero-bar-fill').forEach(function(bar) {
+    var width = bar.getAttribute('data-width');
+    setTimeout(function() { bar.style.width = width; }, 300);
+  });
+}
+
+// Counter animation
+function animateCounters() {
+  var counters = document.querySelectorAll('[data-count]');
+  counters.forEach(function(counter) {
+    var target = parseInt(counter.getAttribute('data-count'));
+    var current = 0;
+    var increment = target / 60;
+    var timer = setInterval(function() {
+      current += increment;
+      if (current >= target) {
+        counter.textContent = target.toLocaleString();
+        clearInterval(timer);
+      } else {
+        counter.textContent = Math.floor(current).toLocaleString();
+      }
+    }, 20);
+  });
+}
+
+// ============================================
+// Scale Slider
+// ============================================
+var scaleData = [
+  { label: '1개 (시제품)', cost: 13500, savings: 0, total: '1.35억' },
+  { label: '10개', cost: 8000, savings: 40, total: '8억' },
+  { label: '100개', cost: 4500, savings: 67, total: '45억' },
+  { label: '1,000개', cost: 2500, savings: 81, total: '25억' }
+];
+
+var scaleSlider = document.getElementById('scaleSlider');
+if (scaleSlider) {
+  scaleSlider.addEventListener('input', function() {
+    var idx = parseInt(this.value);
+    var d = scaleData[idx];
+    document.getElementById('scaleValue').textContent = d.label;
+    document.getElementById('unitCost').textContent = d.cost.toLocaleString() + '만';
+    document.getElementById('savingsRate').textContent = d.savings + '%';
+    document.getElementById('totalCost').textContent = d.total;
+  });
+}
+
+// ============================================
+// Charts (Chart.js)
+// ============================================
+var doughnutChartInstance = null;
+var barChartInstance = null;
+var scaleChartInstance = null;
+
+function getChartTextColor() {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? '#94A3B8' : '#64748B';
+}
+
+function getChartGridColor() {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? '#334155' : '#E2E8F0';
+}
+
+function renderCharts() {
+  var textColor = getChartTextColor();
+  var gridColor = getChartGridColor();
+
+  // Destroy existing charts
+  if (doughnutChartInstance) doughnutChartInstance.destroy();
+  if (barChartInstance) barChartInstance.destroy();
+  if (scaleChartInstance) scaleChartInstance.destroy();
+
+  // Doughnut Chart
+  var dCtx = document.getElementById('doughnutChart');
+  if (dCtx) {
+    doughnutChartInstance = new Chart(dCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['IoT·Edge AI (55%)', '염수 순환 장치 (21%)', '염수 분사 노즐 (13%)', '기타 비용 (11%)'],
+        datasets: [{
+          data: [55, 21, 13, 11],
+          backgroundColor: ['#EC4899', '#8B5CF6', '#3B82F6', '#F59E0B'],
+          borderWidth: 0,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: textColor, padding: 16, font: { size: 12 } }
+          }
+        }
+      }
+    });
+  }
+
+  // Bar Chart
+  var bCtx = document.getElementById('barChart');
+  if (bCtx) {
+    barChartInstance = new Chart(bCtx, {
+      type: 'bar',
+      data: {
+        labels: ['염수 분사 노즐', '염수 순환 장치', 'IoT·Edge AI', '기타 비용'],
+        datasets: [
+          {
+            label: '독자 개발',
+            data: [2000, 3205, 8035, 3725],
+            backgroundColor: 'rgba(234, 88, 12, 0.7)',
+            borderRadius: 4
+          },
+          {
+            label: '협력사 활용',
+            data: [1525, 2475, 6500, 3000],
+            backgroundColor: 'rgba(5, 150, 105, 0.7)',
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: textColor, padding: 16, font: { size: 12 } }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: textColor, font: { size: 11 } },
+            grid: { display: false }
+          },
+          y: {
+            ticks: { color: textColor, font: { size: 11 }, callback: function(v) { return v.toLocaleString() + '만'; } },
+            grid: { color: gridColor }
+          }
+        }
+      }
+    });
+  }
+
+  // Scale Chart
+  var sCtx = document.getElementById('scaleChart');
+  if (sCtx) {
+    scaleChartInstance = new Chart(sCtx, {
+      type: 'line',
+      data: {
+        labels: ['1개', '10개', '100개', '1,000개'],
+        datasets: [{
+          label: '구간당 비용 (만 원)',
+          data: [13500, 8000, 4500, 2500],
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#3B82F6',
+          pointRadius: 6,
+          pointHoverRadius: 8
+        },
+        {
+          label: '절감율 (%)',
+          data: [0, 40, 67, 81],
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: false,
+          tension: 0.4,
+          pointBackgroundColor: '#10B981',
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          yAxisID: 'y1'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: textColor, padding: 16, font: { size: 12 } }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: textColor, font: { size: 12 } },
+            grid: { display: false }
+          },
+          y: {
+            position: 'left',
+            ticks: {
+              color: textColor,
+              font: { size: 11 },
+              callback: function(v) { return v.toLocaleString() + '만'; }
+            },
+            grid: { color: gridColor }
+          },
+          y1: {
+            position: 'right',
+            min: 0,
+            max: 100,
+            ticks: {
+              color: textColor,
+              font: { size: 11 },
+              callback: function(v) { return v + '%'; }
+            },
+            grid: { drawOnChartArea: false }
+          }
+        }
+      }
+    });
+  }
+}
+
+// ============================================
+// Initialize
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+  animateHeroBars();
+  animateCounters();
+  renderCharts();
+});
+</script>
+</body>
+</html>
